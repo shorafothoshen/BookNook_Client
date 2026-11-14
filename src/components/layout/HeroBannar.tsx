@@ -57,7 +57,6 @@ export default function HeroBanner() {
         plugins={[autoplay]}
         className="relative w-full"
       >
-        {/* ---------- Background images (auto slide) ---------- */}
         <CarouselContent className="ml-0">
           {slides.map((img, i) => (
             <CarouselItem

@@ -1,7 +1,11 @@
-import Image from "next/image";
+import BookCards from "@/components/BookCards";
+import HeroBanner from "@/components/layout/HeroBannar";
 
 export default function Home() {
   return (
-   <div></div>
+   <div>
+    <HeroBanner/>
+    <BookCards/>
+   </div>
   );
 }

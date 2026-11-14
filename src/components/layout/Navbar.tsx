@@ -155,7 +155,7 @@ export default function Navbar() {
                 </Button>
                 <Button
                   nativeButton={false}
-                  render={<Link href="/register" />}
+                  render={<Link href="/sign-up" />}
                   className={registerBtn}
                 >
                   Register
