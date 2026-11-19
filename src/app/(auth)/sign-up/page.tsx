@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { Bounce, toast, type ToastOptions } from "react-toastify";
 
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+
+// same toast style as the Login page (written only once)
+const toastOptions: ToastOptions = {
+  position: "top-center",
+  autoClose: 5000,
+  hideProgressBar: false,
+  closeOnClick: false,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: "light",
+  transition: Bounce,
+};
 
 type Field = "name" | "email" | "photo" | "password" | "confirmPassword";
 type Errors = Partial<Record<Field, string>>;
@@ -34,19 +47,14 @@ function getPasswordError(password: string): string {
   return "";
 }
 
-/* ---------- upload the chosen image file to imgbb, get back a URL ---------- */
-async function uploadPhoto(file: File): Promise<string> {
-  const body = new FormData();
-  body.append("image", file);
-
-  const res = await fetch(
-    `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
-    { method: "POST", body }
-  );
-  const data = await res.json();
-
-  if (!data?.success) throw new Error("Photo upload failed. Please try again.");
-  return data.data.display_url as string;
+/* ---------- photo must be a normal web link (http or https) ---------- */
+function isValidUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export default function RegisterPage() {
@@ -54,7 +62,7 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
@@ -62,15 +70,14 @@ export default function RegisterPage() {
     const email = String(fd.get("email") ?? "").trim();
     const password = String(fd.get("password") ?? "");
     const confirmPassword = String(fd.get("confirmPassword") ?? "");
-    const photo = fd.get("photo");
-    const photoFile = photo instanceof File && photo.size > 0 ? photo : null;
+    const photo = String(fd.get("photo") ?? "").trim(); // photo URL (optional)
 
     /* ---------- validate ---------- */
     const next: Errors = {};
     if (!name) next.name = "Please enter your name.";
     if (!/^\S+@\S+\.\S+$/.test(email)) next.email = "Please enter a valid email.";
-    if (photoFile && !photoFile.type.startsWith("image/")) {
-      next.photo = "Please choose an image file.";
+    if (photo && !isValidUrl(photo)) {
+      next.photo = "Please enter a valid photo URL (starting with http:// or https://).";
     }
     const passwordError = getPasswordError(password);
     if (passwordError) next.password = passwordError;
@@ -80,32 +87,32 @@ export default function RegisterPage() {
 
     setErrors(next);
     if (Object.keys(next).length > 0) {
-      toast.error(Object.values(next)[0]); // stop here: invalid, so no register
+      toast.error(Object.values(next)[0], toastOptions); // stop here: invalid, so no register
       return;
     }
 
     /* ---------- register ---------- */
     setLoading(true);
     try {
-      const image = photoFile ? await uploadPhoto(photoFile) : undefined;
-
+      // confirmPassword is only checked above, it is never sent or saved
       const { error } = await authClient.signUp.email({
         name,
         email,
         password,
-        image,
+        image: photo || undefined,
       });
 
       if (error) {
-        toast.error(error.message ?? "Registration failed. Please try again.");
+        toast.error(error.message ?? "Registration failed. Please try again.", toastOptions);
         return;
       }
 
-      toast.success("Account created! Please log in.");
+      toast.success("Account created! Please log in.", toastOptions);
       router.push("/login");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Something went wrong. Please try again."
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        toastOptions
       );
     } finally {
       setLoading(false);
@@ -116,7 +123,7 @@ export default function RegisterPage() {
     try {
       await authClient.signIn.social({ provider: "google", callbackURL: "/" });
     } catch {
-      toast.error("Google sign-in failed. Please try again.");
+      toast.error("Google sign-in failed. Please try again.", toastOptions);
     }
   }
 
@@ -158,12 +165,12 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="photo">Photo</Label>
+              <Label htmlFor="photo">Photo URL</Label>
               <Input
                 id="photo"
                 name="photo"
-                type="file"
-                accept="image/*"
+                type="url"
+                placeholder="https://example.com/photo.jpg"
                 aria-invalid={!!errors.photo}
               />
               {errors.photo && <p className="text-sm text-destructive">{errors.photo}</p>}

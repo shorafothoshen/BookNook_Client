@@ -1,6 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Bounce, toast, type ToastOptions } from "react-toastify";
 
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,11 +17,76 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
-export const metadata: Metadata = { title: "BookNook | Login" };
+// same toast style everywhere in this file (written only once)
+const toastOptions: ToastOptions = {
+  position: "top-center",
+  autoClose: 5000,
+  hideProgressBar: false,
+  closeOnClick: false,
+  pauseOnHover: true,
+  draggable: true,
+  progress: undefined,
+  theme: "light",
+  transition: Bounce,
+};
+
+function getRedirectPath(): string {
+  const redirect = new URLSearchParams(window.location.search).get("redirect");
+  return redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+    ? redirect
+    : "/";
+}
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries()) as Record<string, string>;
+
+    setLoading(true);
+    try {
+      const { error } = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) {
+        toast.error("Could not sign in. Please try again.", toastOptions);
+        return;
+      }
+
+      toast.success("Signed in successfully!", toastOptions);
+      router.push(getRedirectPath());
+      router.refresh();
+    } catch {
+      toast.error("Something went wrong. Please try again.", toastOptions);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: getRedirectPath(),
+      });
+      if (error) {
+        toast.error("Could not sign in with Google. Please try again.", toastOptions);
+      }
+    } catch {
+      toast.error("Could not sign in with Google. Please try again.", toastOptions);
+    }
+  };
+
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-muted/30 px-4 py-10">
+      <title>BookNook | Login</title>
+
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-serif text-3xl font-bold">Login</CardTitle>
@@ -25,10 +94,17 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -41,14 +117,22 @@ export default function LoginPage() {
                   Forget Password?
                 </Link>
               </div>
-              <Input id="password" type="password" placeholder="Your password" />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Your password"
+                autoComplete="current-password"
+                required
+              />
             </div>
 
             <Button
-              type="button"
+              type="submit"
+              disabled={loading}
               className="w-full bg-orange-500 text-white hover:bg-orange-600"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
 
@@ -58,7 +142,12 @@ export default function LoginPage() {
             <Separator className="flex-1" />
           </div>
 
-          <Button type="button" variant="outline" className="w-full gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGoogleSignIn}
+            className="w-full gap-2"
+          >
             <svg viewBox="0 0 48 48" className="size-4" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
               <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.9-2.1 5.3-4.5 6.9l7.3 5.7c4.3-4 6.9-9.9 6.9-16.6z" />
