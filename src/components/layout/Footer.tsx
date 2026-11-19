@@ -64,15 +64,14 @@ const LinkedinIcon = () => (
 );
 
 const socials = [
-  { label: "X", href: "https://x.com", icon: XIcon },
   { label: "Facebook", href: "https://facebook.com", icon: FacebookIcon },
   { label: "Instagram", href: "https://instagram.com", icon: InstagramIcon },
   { label: "LinkedIn", href: "https://linkedin.com", icon: LinkedinIcon },
 ];
 
 const contacts = [
-  { icon: Mail, text: "support@booknook.com", href: "mailto:support@booknook.com" },
-  { icon: Phone, text: "+880 1234 567890", href: "tel:+8801234567890" },
+  { icon: Mail, text: "shorafothoshen@gmail.com", href: "shorafothoshen@gmail.com" },
+  { icon: Phone, text: "+880 1817 822166", href: "tel:+8801817822166" },
   { icon: MapPin, text: "12 Reading Lane, Book City" },
 ];
 
