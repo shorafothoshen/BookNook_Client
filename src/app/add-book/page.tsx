@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getJwtToken } from "@/lib/token";
 
 const categories = ["Fiction", "Science", "History", "Kids", "Others"];
 
@@ -76,7 +75,10 @@ export default function AddBookPage() {
 
     // 1. take the data out of the input fields (same as the Login page)
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries()) as Record<string, string>;
+    const data = Object.fromEntries(formData.entries()) as Record<
+      string,
+      string
+    >;
     const imageFile = formData.get("image");
 
     const title = (data.title ?? "").trim();
@@ -107,24 +109,32 @@ export default function AddBookPage() {
 
     setLoading(true);
     try {
+      const { data: jwtData } = await authClient.token();
+      if (!jwtData?.token) {
+        toast.error("Please log in again.", toastOptions);
+        return;
+      }
+
       const image = await uploadImage(imageFile);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${await getJwtToken()}`,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/add-books`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${jwtData.token}`,
+          },
+          body: JSON.stringify({
+            title,
+            author,
+            category,
+            image,
+            description,
+            totalCopies,
+          }),
         },
-        body: JSON.stringify({
-          title,
-          author,
-          category,
-          image,
-          description,
-          totalCopies,
-        }),
-      });
-
+      );
       const result = await response.json().catch(() => null);
       if (!response.ok) {
         throw new Error(result?.message || "Could not add the book.");
@@ -137,7 +147,9 @@ export default function AddBookPage() {
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
         toastOptions,
       );
     } finally {
@@ -150,7 +162,9 @@ export default function AddBookPage() {
       <title>BookNook | Add Book</title>
       <Card className="mx-auto w-full max-w-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="font-serif text-3xl font-bold">Add a Book</CardTitle>
+          <CardTitle className="font-serif text-3xl font-bold">
+            Add a Book
+          </CardTitle>
           <CardDescription>
             Share a book with other readers on BookNook.
           </CardDescription>
@@ -161,11 +175,21 @@ export default function AddBookPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="title">Book Title</Label>
-                <Input id="title" name="title" placeholder="Enter book title" required />
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="Enter book title"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="author">Author Name</Label>
-                <Input id="author" name="author" placeholder="Enter author name" required />
+                <Input
+                  id="author"
+                  name="author"
+                  placeholder="Enter author name"
+                  required
+                />
               </div>
             </div>
 
@@ -177,7 +201,11 @@ export default function AddBookPage() {
                   value={category}
                   onValueChange={(value) => setCategory(value ?? "")}
                 >
-                  <SelectTrigger id="category" className="w-full" aria-required="true">
+                  <SelectTrigger
+                    id="category"
+                    className="w-full"
+                    aria-required="true"
+                  >
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -205,7 +233,13 @@ export default function AddBookPage() {
 
             <div className="space-y-2">
               <Label htmlFor="image">Book Image</Label>
-              <Input id="image" name="image" type="file" accept="image/*" required />
+              <Input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/*"
+                required
+              />
             </div>
 
             <div className="space-y-2">

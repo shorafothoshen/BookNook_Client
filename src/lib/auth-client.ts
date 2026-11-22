@@ -5,7 +5,8 @@ export const authClient = createAuthClient({
     baseURL: process.env.BETTER_AUTH_URL,
      plugins: [
     jwtClient() 
-  ]
+  ],
+  sessionOptions: { refetchOnWindowFocus: false },
 })
 
 export const { signIn, signUp,updateUser,signOut, useSession } = authClient;
