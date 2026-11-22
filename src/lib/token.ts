@@ -1,11 +1,9 @@
 import { authClient } from "./auth-client";
 
-export const getJwtToken = async () => {
+export async function getToken(): Promise<string> {
   const { data, error } = await authClient.token();
   if (error || !data?.token) {
-    // ask the user to log in again
-    return;
+    throw new Error("Could not authenticate. Please log in again.");
   }
-  const token = data.token;
-  return token;
-};
+  return data.token;
+}

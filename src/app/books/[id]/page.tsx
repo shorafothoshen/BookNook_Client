@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, CalendarDays, Copy } from "lucide-react";
 
+import { auth } from "@/lib/auth";
+import { BookDetails } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,25 +26,84 @@ import { Separator } from "@/components/ui/separator";
 
 export const metadata: Metadata = { title: "BookNook | Book Details" };
 
-// sample data, only for the design
-const book = {
-  title: "The Silent Garden",
-  author: "Amina Rahman",
-  category: "Fiction",
-  image: "/books/book-1.jpg",
-  description:
-    "A quiet story about a woman who inherits an old garden and slowly learns the secrets hidden behind its walls. Warm, gentle and full of small surprises, it is a perfect book for a calm weekend.",
-  addedBy: { name: "Rahim Uddin", email: "rahim@example.com" },
-  addedOn: "12 November 2026",
-  availableCopies: 3,
-  totalCopies: 5,
-};
+export default async function BookDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
-// sample logged in user (shown inside the borrow modal)
-const user = { name: "Nadia Karim", email: "nadia@example.com" };
+  let book: BookDetails | null = null;
+  let errorMessage = "";
+  let bookMissing = false;
+  let needsLogin = false;
+  let user = { name: "", email: "" };
 
-export default function BookDetailsPage() {
-  const available = book.availableCopies > 0;
+  try {
+    const headerList = await headers();
+
+    // JWT and session of the logged in user (null when nobody is logged in)
+    const jwt = await auth.api.getToken({ headers: headerList }).catch(() => null);
+    const session = await auth.api.getSession({ headers: headerList }).catch(() => null);
+    user = { name: session?.user.name ?? "", email: session?.user.email ?? "" };
+
+    if (!jwt?.token) {
+      needsLogin = true;
+    } else {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/books/${id}`, {
+        method: "GET",
+        cache: "no-store",
+        headers: { authorization: `Bearer ${jwt.token}` },
+      });
+      const result = await res.json().catch(() => null);
+
+      if (res.status === 404 || res.status === 400) {
+        bookMissing = true; // no book with this id
+      } else if (!res.ok) {
+        throw new Error(result?.message || "Could not load the book.");
+      } else {
+        book = result?.book ?? result;
+      }
+    }
+  } catch (error) {
+    errorMessage = error instanceof Error ? error.message : "Could not load the book.";
+  }
+
+  // redirect() and notFound() must run outside try/catch
+  if (needsLogin) redirect(`/login?redirect=/books/${id}`);
+  if (bookMissing) notFound();
+
+  if (errorMessage || !book) {
+    return (
+      <main className="bg-muted/30 px-4 py-20">
+        <div className="mx-auto max-w-md rounded-2xl bg-card p-8 text-center ring-1 ring-border">
+          <p className="font-medium text-foreground">Could not load the book</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {errorMessage || "Please try again."}
+          </p>
+          <Button
+            nativeButton={false}
+            render={<Link href="/books" />}
+            className="mt-5 bg-orange-500 text-white hover:bg-orange-600"
+          >
+            Back to All Books
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
+  const availableCopies = book.availableCopies ?? 0;
+  const totalCopies = book.totalCopies ?? 0;
+  const available = availableCopies > 0;
+  const addedBy = book.userName || "Unknown";
+  const addedOn = book.createdAt
+    ? new Date(book.createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Unknown date";
 
   return (
     <main className="bg-muted/30 py-10 sm:py-14">
@@ -61,6 +124,7 @@ export default function BookDetailsPage() {
               alt={`Cover of ${book.title}`}
               fill
               priority
+              unoptimized
               sizes="(min-width: 768px) 50vw, 100vw"
               className="object-cover"
             />
@@ -94,16 +158,16 @@ export default function BookDetailsPage() {
               <div className="flex items-center gap-3">
                 <Avatar className="size-10">
                   <AvatarFallback className="bg-orange-500 font-semibold text-white">
-                    {book.addedBy.name.charAt(0)}
+                    {addedBy.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Added by</p>
                   <p className="truncate text-sm font-semibold text-foreground">
-                    {book.addedBy.name}
+                    {addedBy}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {book.addedBy.email}
+                    {book.userEmail}
                   </p>
                 </div>
               </div>
@@ -112,12 +176,12 @@ export default function BookDetailsPage() {
                 <p className="flex items-center gap-2 text-muted-foreground">
                   <CalendarDays className="size-4 text-orange-500" />
                   Added on{" "}
-                  <span className="font-medium text-foreground">{book.addedOn}</span>
+                  <span className="font-medium text-foreground">{addedOn}</span>
                 </p>
                 <p className="flex items-center gap-2 text-muted-foreground">
                   <Copy className="size-4 text-orange-500" />
                   <span className="font-medium text-foreground">
-                    {book.availableCopies} of {book.totalCopies}
+                    {availableCopies} of {totalCopies}
                   </span>{" "}
                   copies available
                 </p>
