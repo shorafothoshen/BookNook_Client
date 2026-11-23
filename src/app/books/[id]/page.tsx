@@ -2,27 +2,17 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Copy } from "lucide-react";
 
 import { auth } from "@/lib/auth";
-import { BookDetails } from "@/lib/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { BookDetails } from "@/lib/types";
+import BorrowDialog from "@/components/BorrowDialog";
+// import { useState } from "react";
 
 export const metadata: Metadata = { title: "BookNook | Book Details" };
 
@@ -32,45 +22,40 @@ export default async function BookDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // const {borrowBookCount ,setborrowBookCount} = useState(availableCopies > 0 ? 1 : 0); // Initialize borrowBookCount based on availability
 
   let book: BookDetails | null = null;
   let errorMessage = "";
   let bookMissing = false;
-  let needsLogin = false;
   let user = { name: "", email: "" };
 
   try {
     const headerList = await headers();
 
-    // JWT and session of the logged in user (null when nobody is logged in)
-    const jwt = await auth.api.getToken({ headers: headerList }).catch(() => null);
-    const session = await auth.api.getSession({ headers: headerList }).catch(() => null);
+    // login check proxy.ts e hocche, ekhane shudhu JWT ar user newa hocche
+    const jwt = await auth.api.getToken({ headers: headerList });
+    const session = await auth.api.getSession({ headers: headerList });
     user = { name: session?.user.name ?? "", email: session?.user.email ?? "" };
 
-    if (!jwt?.token) {
-      needsLogin = true;
-    } else {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/books/${id}`, {
-        method: "GET",
-        cache: "no-store",
-        headers: { authorization: `Bearer ${jwt.token}` },
-      });
-      const result = await res.json().catch(() => null);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/books/${id}`, {
+      cache: "no-store",
+      headers: { authorization: `Bearer ${jwt.token}` },
+    });
+    const result = await res.json().catch(() => null);
 
-      if (res.status === 404 || res.status === 400) {
-        bookMissing = true; // no book with this id
-      } else if (!res.ok) {
-        throw new Error(result?.message || "Could not load the book.");
-      } else {
-        book = result?.book ?? result;
-      }
+    if (res.status === 404 || res.status === 400) {
+      bookMissing = true; // no book with this id
+    } else if (!res.ok) {
+      throw new Error(result?.message || "Could not load the book.");
+    } else {
+      // the backend may send the book itself, or { book: {...} }
+      book = result?.book ?? result;
     }
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : "Could not load the book.";
   }
 
-  // redirect() and notFound() must run outside try/catch
-  if (needsLogin) redirect(`/login?redirect=/books/${id}`);
+  // notFound() must run outside try/catch
   if (bookMissing) notFound();
 
   if (errorMessage || !book) {
@@ -118,7 +103,18 @@ export default async function BookDetailsPage({
 
         <div className="mt-6 grid gap-8 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border sm:p-6 md:grid-cols-2 lg:gap-12 lg:p-8">
           {/* ---------- Image ---------- */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted md:aspect-auto md:min-h-[420px]">
+          <div className="relative h-80 w-full overflow-hidden rounded-xl bg-muted sm:h-[26rem] md:h-auto md:min-h-[480px]">
+            {/* soft blurred copy of the cover fills the background, so there are no empty bars */}
+            <Image
+              src={book.image}
+              alt=""
+              aria-hidden="true"
+              fill
+              unoptimized
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="scale-110 object-cover opacity-50 blur-2xl"
+            />
+            {/* the full cover, never cropped */}
             <Image
               src={book.image}
               alt={`Cover of ${book.title}`}
@@ -126,7 +122,7 @@ export default async function BookDetailsPage({
               priority
               unoptimized
               sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover"
+              className="object-contain p-4 drop-shadow-2xl sm:p-6"
             />
           </div>
 
@@ -188,65 +184,15 @@ export default async function BookDetailsPage({
               </div>
             </div>
 
-            {/* ---------- Borrow button + modal ---------- */}
+            {/* ---------- Borrow ---------- */}
             <div className="mt-8">
-              <Dialog>
-                {/* when copies are 0 this button shows "Not Available" and is disabled */}
-                <DialogTrigger
-                  disabled={!available}
-                  render={
-                    <Button className="h-auto w-full rounded-xl border-transparent bg-orange-500 py-3 text-base font-semibold text-white shadow-md shadow-orange-500/25 hover:bg-orange-600 disabled:opacity-60 sm:w-auto sm:px-10" />
-                  }
-                >
-                  {available ? "Borrow This Book" : "Not Available"}
-                </DialogTrigger>
-
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="font-serif text-2xl">
-                      Borrow this book
-                    </DialogTitle>
-                    <DialogDescription>
-                      You are borrowing{" "}
-                      <span className="font-medium text-foreground">{book.title}</span>{" "}
-                      for a few days.
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <form className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="borrowName">Your Name</Label>
-                      <Input
-                        id="borrowName"
-                        defaultValue={user.name}
-                        readOnly
-                        className="bg-muted text-muted-foreground"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="borrowEmail">Your Email</Label>
-                      <Input
-                        id="borrowEmail"
-                        defaultValue={user.email}
-                        readOnly
-                        className="bg-muted text-muted-foreground"
-                      />
-                    </div>
-
-                    <DialogFooter className="gap-2 sm:gap-2">
-                      <DialogClose render={<Button type="button" variant="outline" />}>
-                        Cancel
-                      </DialogClose>
-                      <Button
-                        type="button"
-                        className="bg-orange-500 text-white hover:bg-orange-600"
-                      >
-                        Confirm Borrow
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <BorrowDialog
+                bookId={id}
+                title={book.title}
+                available={available}
+                userName={user.name}
+                userEmail={user.email}
+              />
             </div>
           </div>
         </div>

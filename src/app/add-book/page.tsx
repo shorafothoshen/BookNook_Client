@@ -132,6 +132,8 @@ export default function AddBookPage() {
             image,
             description,
             totalCopies,
+            availableCopies: totalCopies, 
+            userName: user.name, 
           }),
         },
       );
