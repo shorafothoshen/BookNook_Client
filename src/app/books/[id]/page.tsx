@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BookDetails } from "@/lib/types";
 import BorrowDialog from "@/components/BorrowDialog";
-// import { useState } from "react";
 
 export const metadata: Metadata = { title: "BookNook | Book Details" };
 
