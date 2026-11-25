@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, User } from "lucide-react";
 
-import { auth } from "@/lib/auth";
 import { BookType } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,32 +13,16 @@ export const metadata: Metadata = { title: "All Books" };
 export default async function AllBooksPage() {
   let books: BookType[] = [];
   let errorMessage = "";
-  let needsLogin = false;
 
   try {
-    // JWT of the logged in user (null when nobody is logged in)
-    const jwt = await auth.api
-      .getToken({ headers: await headers() })
-      .catch(() => null);
-
-    if (!jwt?.token) {
-      needsLogin = true;
-    } else {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/books`, {
-        method: "GET",
-        cache: "no-store", // always get the latest books
-        headers: { authorization: `Bearer ${jwt.token}` },
-      });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/books`);
       const result = await res.json().catch(() => null);
 
       if (!res.ok) {
         throw new Error(result?.message || "Could not load the books.");
       }
-
-      // the backend may send an array, or { books: [...] }
       books = Array.isArray(result) ? result : (result?.books ?? []);
-    }
-  } catch (error) {
+    }catch (error) {
     errorMessage =
       error instanceof Error ? error.message : "Could not load the books.";
   }
@@ -60,8 +42,13 @@ export default async function AllBooksPage() {
         </div>
 
         {/* ---------- Content ---------- */}
-        {needsLogin ? (
-          <div className="mx-auto mt-10 flex max-w-md flex-col items-center rounded-2xl bg-card px-6 py-12 text-center ring-1 ring-border">
+        {errorMessage ? (
+          <div className="mx-auto mt-10 max-w-md rounded-2xl bg-card p-8 text-center ring-1 ring-border">
+            <p className="font-medium text-foreground">Could not load the books</p>
+            <p className="mt-1 text-sm text-muted-foreground">{errorMessage}</p>
+          </div>
+        ) : books.length === 0 ? (
+          <div className="mx-auto mt-10 flex max-w-md flex-col items-center rounded-2xl bg-card px-6 py-14 text-center ring-1 ring-border">
             <span className="grid size-14 place-items-center rounded-2xl bg-orange-500/10 text-orange-500">
               <BookOpen className="size-7" />
             </span>
