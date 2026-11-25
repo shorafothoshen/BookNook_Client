@@ -15,18 +15,32 @@ export interface BookDetails extends BookType {
   totalCopies?: number;
 };
 
-export interface Review {
+export interface Borrow {
   _id: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  updatedAt: string;
+  bookId: string;
+  bookTitle: string;
+  image?: string;
+  borrowedDate?: string;
+  borrowDate?: string;
+  createdAt?: string;
+  returnDate: string;
 };
 
-export interface RatingSummary {
-  average: number;
-  count: number;
-  myRating: number;
-  myComment: string;
-  reviews: Review[];
-};
+export interface TrendingBook {
+  _id: string;
+  title: string;
+  author: string;
+  category: string;
+  image: string;
+}
+
+export interface borrowedBook {
+  bookId: string;
+  title: string;
+  initialAvailable: number;
+  totalCopies: number;
+  addedBy: string;
+  addedOn: string;
+  userName: string;
+  userEmail: string;
+}

@@ -3,10 +3,9 @@ import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Copy } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { auth } from "@/lib/auth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +20,6 @@ export default async function BookDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  // const {borrowBookCount ,setborrowBookCount} = useState(availableCopies > 0 ? 1 : 0); // Initialize borrowBookCount based on availability
 
   let book: BookDetails | null = null;
   let errorMessage = "";
@@ -79,7 +77,6 @@ export default async function BookDetailsPage({
 
   const availableCopies = book.availableCopies ?? 0;
   const totalCopies = book.totalCopies ?? 0;
-  const available = availableCopies > 0;
   const addedBy = book.userName || "Unknown";
   const addedOn = book.createdAt
     ? new Date(book.createdAt).toLocaleDateString("en-US", {
@@ -135,8 +132,7 @@ export default async function BookDetailsPage({
               {book.title}
             </h1>
             <p className="mt-2 text-base text-muted-foreground">
-              by{" "}
-              <span className="font-medium text-foreground">{book.author}</span>
+              by <span className="font-medium text-foreground">{book.author}</span>
             </p>
 
             <Separator className="my-6" />
@@ -148,51 +144,17 @@ export default async function BookDetailsPage({
               {book.description}
             </p>
 
-            {/* details */}
-            <div className="mt-6 grid gap-4 rounded-xl bg-muted/50 p-4 sm:grid-cols-2">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-10">
-                  <AvatarFallback className="bg-orange-500 font-semibold text-white">
-                    {addedBy.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">Added by</p>
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {addedBy}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {book.userEmail}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <p className="flex items-center gap-2 text-muted-foreground">
-                  <CalendarDays className="size-4 text-orange-500" />
-                  Added on{" "}
-                  <span className="font-medium text-foreground">{addedOn}</span>
-                </p>
-                <p className="flex items-center gap-2 text-muted-foreground">
-                  <Copy className="size-4 text-orange-500" />
-                  <span className="font-medium text-foreground">
-                    {availableCopies} of {totalCopies}
-                  </span>{" "}
-                  copies available
-                </p>
-              </div>
-            </div>
-
-            {/* ---------- Borrow ---------- */}
-            <div className="mt-8">
-              <BorrowDialog
-                bookId={id}
-                title={book.title}
-                available={available}
-                userName={user.name}
-                userEmail={user.email}
-              />
-            </div>
+            {/* details + copies + borrow button (shared state BorrowDialog er bhitore) */}
+            <BorrowDialog
+              bookId={id}
+              title={book.title}
+              initialAvailable={availableCopies}
+              totalCopies={totalCopies}
+              addedBy={addedBy}
+              addedOn={addedOn}
+              userName={user.name}
+              userEmail={user.email}
+            />
           </div>
         </div>
       </div>

@@ -1,10 +1,12 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Star, TrendingUp } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {type TrendingBook} from "@/lib/types";
 import {
   Carousel,
   CarouselContent,
@@ -13,42 +15,45 @@ import {
 } from "@/components/ui/carousel";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type TrendingBook = {
-  id: string;
-  title: string;
-  author: string;
-  category: string;
-  image: string;
-  rating: number;
-};
+type TabKey = "featured" | "new" | "mostBorrowed";
 
-// sample data, only for the design
-const books: TrendingBook[] = [
-  { id: "1", title: "The Silent Garden", author: "Amina Rahman", category: "Fiction", image: "/books/book-1.jpg", rating: 5 },
-  { id: "2", title: "Atoms and Curiosity", author: "Daniel Archer", category: "Science", image: "/books/book-2.jpg", rating: 4 },
-  { id: "3", title: "Rivers of the Old World", author: "Sofia Marin", category: "History", image: "/books/book-3.jpg", rating: 5 },
-  { id: "4", title: "The Little Lantern", author: "Tariq Hasan", category: "Kids", image: "/books/book-4.jpg", rating: 4 },
-  { id: "5", title: "Letters from the Coast", author: "Nadia Karim", category: "Fiction", image: "/books/book-5.jpg", rating: 5 },
-  { id: "6", title: "How Machines Think", author: "Oliver Grant", category: "Science", image: "/books/book-6.jpg", rating: 4 },
-  { id: "7", title: "A Quiet Morning", author: "Lina Cruz", category: "Others", image: "/books/book-1.jpg", rating: 4 },
-  { id: "8", title: "Stars Above the Village", author: "Imran Ali", category: "Kids", image: "/books/book-2.jpg", rating: 5 },
-];
+type TrendingData = Record<TabKey, TrendingBook[]>;
 
-// each tab shows the same sample books in a different order
-const tabs = [
-  { value: "featured", label: "Featured", items: books },
-  { value: "new", label: "New", items: [...books].reverse() },
-  { value: "borrowed", label: "Most Borrowed", items: [...books.slice(3), ...books.slice(0, 3)] },
+const tabs: { value: TabKey; label: string }[] = [
+  { value: "featured", label: "Featured" },
+  { value: "new", label: "New" },
+  { value: "mostBorrowed", label: "Most Borrowed" },
 ];
 
 const arrowBtn =
   "size-10 rounded-full border-orange-500/60 bg-transparent text-orange-500 shadow-none transition hover:bg-orange-500 hover:text-white disabled:border-border disabled:text-muted-foreground disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted-foreground";
 
 export default function TrendingBooks() {
-  const [tab, setTab] = useState("featured");
+  const [data, setData] = useState<TrendingData>({
+    featured: [],
+    new: [],
+    mostBorrowed: [],
+  });
+  const [tab, setTab] = useState<TabKey>("featured");
   const [api, setApi] = useState<CarouselApi>();
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
+
+  // ekbar-ei 3ta tab er data fetch
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/trending-books`
+        );
+        if (!res.ok) throw new Error("Failed to load books");
+        setData(await res.json());
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    load();
+  }, []);
 
   // keep the arrow buttons in sync with the carousel
   useEffect(() => {
@@ -66,10 +71,10 @@ export default function TrendingBooks() {
     };
   }, [api]);
 
-  const items = (tabs.find((t) => t.value === tab) ?? tabs[0]).items;
+  const items = data[tab] ?? [];
 
   const handleTabChange = (value: unknown) => {
-    setTab(String(value));
+    setTab(value as TabKey);
     api?.scrollTo(0, true); // jump back to the first book
   };
 
@@ -132,61 +137,63 @@ export default function TrendingBooks() {
         </div>
 
         {/* ---------- Books ---------- */}
-        <Carousel
-          setApi={setApi}
-          opts={{ align: "start" }}
-          className="mt-10 w-full"
-        >
-          <CarouselContent className="-ml-4 sm:-ml-6">
-            {items.map((book) => (
-              <CarouselItem
-                key={`${tab}-${book.id}`}
-                className="basis-1/2 pl-4 sm:basis-1/3 sm:pl-6 lg:basis-1/5"
-              >
-                <Link href={`/books/${book.id}`} className="group block">
-                  {/* cover */}
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted shadow-md ring-1 ring-border transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-xl group-hover:shadow-orange-500/15">
-                    <Image
-                      src={book.image}
-                      alt={`Cover of ${book.title}`}
-                      fill
-                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <span className="absolute left-0 top-3 rounded-r-md bg-black/80 px-2.5 py-1 text-[11px] font-medium text-white">
-                      {book.category}
-                    </span>
-                  </div>
-
-                  {/* info */}
-                  <div className="mt-4 text-center">
-                    <div
-                      className="flex justify-center gap-0.5"
-                      aria-label={`${book.rating} out of 5 stars`}
-                    >
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`size-3.5 ${
-                            i < book.rating
-                              ? "fill-orange-400 text-orange-400"
-                              : "text-muted-foreground/40"
-                          }`}
+        {items.length === 0 ? (
+          /* ---------- Empty state ---------- */
+          <div className="mx-auto mt-10 flex max-w-xl flex-col items-center justify-center rounded-2xl bg-card px-6 py-14 text-center shadow-sm ring-1 ring-border">
+            <div className="flex size-14 items-center justify-center rounded-full bg-orange-500/10">
+              <BookOpen className="size-7 text-orange-500" />
+            </div>
+            <h3 className="mt-4 font-serif text-xl font-bold text-foreground">
+              No books found
+            </h3>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+              There are no books in this list yet. Please check back soon.
+            </p>
+          </div>
+        ) : (
+          <Carousel
+            setApi={setApi}
+            opts={{ align: "start" }}
+            className="mt-10 w-full"
+          >
+            <CarouselContent className="-ml-4 sm:-ml-6">
+              {items.map((book) => (
+                <CarouselItem
+                  key={`${tab}-${book._id}`}
+                  className="basis-1/2 pl-4 sm:basis-1/3 sm:pl-6 lg:basis-1/5"
+                >
+                  <Link href={`/books/${book._id}`} className="group block">
+                    {/* cover */}
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted shadow-md ring-1 ring-border transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-xl group-hover:shadow-orange-500/15">
+                      {book.image && (
+                        <Image
+                          src={book.image}
+                          alt={`Cover of ${book.title}`}
+                          fill
+                          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                      ))}
+                      )}
+                      <span className="absolute left-0 top-3 rounded-r-md bg-black/80 px-2.5 py-1 text-[11px] font-medium text-white">
+                        {book.category}
+                      </span>
                     </div>
-                    <h3 className="mt-2 line-clamp-1 font-serif text-base font-bold text-foreground transition-colors group-hover:text-orange-500">
-                      {book.title}
-                    </h3>
-                    <p className="mt-0.5 line-clamp-1 text-sm font-medium text-orange-500">
-                      {book.author}
-                    </p>
-                  </div>
-                </Link>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+
+                    {/* info */}
+                    <div className="mt-4 text-center">
+                      <h3 className="line-clamp-1 font-serif text-base font-bold text-foreground transition-colors group-hover:text-orange-500">
+                        {book.title}
+                      </h3>
+                      <p className="mt-0.5 line-clamp-1 text-sm font-medium text-orange-500">
+                        {book.author}
+                      </p>
+                    </div>
+                  </Link>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        )}
       </div>
     </section>
   );

@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, CalendarCheck, CalendarDays, RotateCcw } from "lucide-react";
+import {
+  BookOpen,
+  CalendarCheck,
+  CalendarDays,
+} from "lucide-react";
 import { Bounce, toast, type ToastOptions } from "react-toastify";
 
 import { authClient } from "@/lib/auth-client";
@@ -16,15 +19,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Loading from "./loading";
-
-type Borrow = {
-  _id: string;
-  bookId: string;
-  bookTitle: string;
-  bookImage: string;
-  borrowDate: string;
-  returnDate: string;
-};
+import Image from "next/image";
+import { type Borrow } from "@/lib/types";
+import ReturnButton from "@/components/borrowButton";
 
 const toastOptions: ToastOptions = {
   position: "top-center",
@@ -38,14 +35,105 @@ const toastOptions: ToastOptions = {
   transition: Bounce,
 };
 
-const returnBtn = "gap-1.5 bg-orange-500 text-white hover:bg-orange-600";
-
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-GB", {
+const formatDate = (value?: string) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+};
+// borrow date ta jekono field name e ashle-o kaj korbe
+const getBorrowDate = (b: Borrow) => b.borrowedDate ?? b.borrowDate ?? b.createdAt;
+
+// return date par hoye gele true
+const isOverdue = (value?: string) => {
+  if (!value) return false;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+};
+
+// kotodin baki ba kotodin late
+const daysLeft = (value?: string) => {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / 86400000);
+};
+
+function StatusBadge({ value }: { value?: string }) {
+  const days = daysLeft(value);
+  if (days === null) return null;
+
+  if (days < 0) {
+    return (
+      <span className="inline-flex w-fit items-center rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-semibold text-red-600">
+        Overdue by {Math.abs(days)} {Math.abs(days) === 1 ? "day" : "days"}
+      </span>
+    );
+  }
+  if (days === 0) {
+    return (
+      <span className="inline-flex w-fit items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600">
+        Due today
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex w-fit items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">
+      {days} {days === 1 ? "day" : "days"} left
+    </span>
+  );
+}
+
+function BookCover({
+  src,
+  title,
+  width,
+  height,
+  className,
+}: {
+  src?: string;
+  title: string;
+  width: number;
+  height: number;
+  className: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <div
+        style={{ width, height }}
+        className={`grid shrink-0 place-items-center bg-orange-500/10 text-orange-500 ${className}`}
+      >
+        <BookOpen className="size-1/3" />
+      </div>
+    );
+  }
+
+  return (
+   
+    <Image
+      src={src}
+      alt={`Cover of ${title}`}
+      width={width}
+      height={height}
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+      style={{ width, height }}
+      className={`shrink-0 bg-muted object-cover ${className}`}
+    />
+  );
+}
 
 export default function MyBorrowsPage() {
   const { isPending } = authClient.useSession();
@@ -66,7 +154,7 @@ export default function MyBorrowsPage() {
         }
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/my-borrows`, {
-          cache: "no-store", // always ask the server, never show an old list
+          cache: "no-store",
           headers: { authorization: `Bearer ${data.token}` },
         });
         const result = await res.json().catch(() => null);
@@ -75,7 +163,6 @@ export default function MyBorrowsPage() {
           throw new Error(result?.message || "Could not load your borrowed books.");
         }
 
-        // the backend may send an array, or { borrows: [...] }
         setBorrows(Array.isArray(result) ? result : (result?.borrows ?? []));
       } catch (error) {
         setErrorMessage(
@@ -111,7 +198,7 @@ export default function MyBorrowsPage() {
         throw new Error(result?.message || "Could not return the book.");
       }
 
-      setBorrows((prev) => prev.filter((borrow) => borrow._id !== id)); // remove it from the screen
+      setBorrows((prev) => prev.filter((borrow) => borrow._id !== id));
       toast.success("Book returned successfully!", toastOptions);
     } catch (error) {
       toast.error(
@@ -123,23 +210,31 @@ export default function MyBorrowsPage() {
     }
   };
 
-  // while the borrows load, show your loading.tsx screen
   if (loading || isPending) return <Loading />;
 
   return (
-    <main className="bg-muted/30 py-10 sm:py-14">
-      <title>BookNook | My Borrows</title>
+    <main className="min-h-[70vh] bg-muted/30 py-10 sm:py-14">
+      <title>My Borrows</title>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* ---------- Heading ---------- */}
-        <div>
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            My Borrows
-          </h1>
-          <div className="mt-3 h-1 w-14 rounded-full bg-orange-500" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            Books you have borrowed ({borrows.length}). Return them when you are done.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              My Borrows
+            </h1>
+            <div className="mt-3 h-1 w-14 rounded-full bg-orange-500" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              Return your books on time so others can enjoy them too.
+            </p>
+          </div>
+
+          {!errorMessage && borrows.length > 0 && (
+            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-orange-500/10 px-4 py-1.5 text-sm font-semibold text-orange-600">
+              <BookOpen className="size-4" />
+              {borrows.length} {borrows.length === 1 ? "book" : "books"} borrowed
+            </span>
+          )}
         </div>
 
         {/* ---------- Content ---------- */}
@@ -160,7 +255,7 @@ export default function MyBorrowsPage() {
             <Button
               nativeButton={false}
               render={<Link href="/books" />}
-              className="mt-5 bg-orange-500 text-white hover:bg-orange-600"
+              className="mt-5 cursor-pointer bg-orange-500 text-white hover:bg-orange-600"
             >
               Browse Books
             </Button>
@@ -172,45 +267,55 @@ export default function MyBorrowsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-20 pl-6">Image</TableHead>
+                    <TableHead className="w-24 pl-6">Book</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Borrow Date</TableHead>
                     <TableHead>Return Date</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="pr-6 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {borrows.map((item) => (
-                    <TableRow key={item._id}>
+                    <TableRow key={item._id} className="hover:bg-orange-500/5">
                       <TableCell className="py-4 pl-6">
-                        <Image
-                          src={item.bookImage}
-                          alt={`Cover of ${item.bookTitle}`}
+                        <BookCover
+                          src={item.image}
+                          title={item.bookTitle}
                           width={56}
-                          height={72}
-                          unoptimized
-                          className="h-[72px] w-14 rounded-md bg-muted object-cover"
+                          height={76}
+                          className="rounded-md shadow-sm ring-1 ring-border"
                         />
                       </TableCell>
-                      <TableCell className="font-serif text-base font-semibold">
-                        {item.bookTitle}
+                      <TableCell className="max-w-[260px]">
+                        <Link
+                          href={`/books/${item.bookId}`}
+                          className="line-clamp-2 font-serif text-base font-semibold leading-snug transition-colors hover:text-orange-500"
+                        >
+                          {item.bookTitle}
+                        </Link>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatDate(item.borrowDate)}
+                        {formatDate(getBorrowDate(item))}
                       </TableCell>
-                      <TableCell className="font-medium text-foreground">
+                      <TableCell
+                        className={`font-medium ${
+                          isOverdue(item.returnDate) ? "text-red-600" : "text-foreground"
+                        }`}
+                      >
                         {formatDate(item.returnDate)}
                       </TableCell>
+                      <TableCell>
+                        <StatusBadge value={item.returnDate} />
+                      </TableCell>
                       <TableCell className="pr-6 text-right">
-                        <Button
+                        <ReturnButton
+                          id={item._id}
+                          returningId={returningId}
+                          onReturn={handleReturn}
                           size="sm"
-                          onClick={() => handleReturn(item._id)}
-                          disabled={returningId === item._id}
-                          className={returnBtn}
-                        >
-                          <RotateCcw className="size-3.5" />
-                          {returningId === item._id ? "Returning..." : "Return Book"}
-                        </Button>
+                          iconClass="size-3.5"
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -226,39 +331,45 @@ export default function MyBorrowsPage() {
                   className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border"
                 >
                   <div className="flex gap-4">
-                    <Image
-                      src={item.bookImage}
-                      alt={`Cover of ${item.bookTitle}`}
+                    <BookCover
+                      src={item.image}
+                      title={item.bookTitle}
                       width={80}
-                      height={104}
-                      unoptimized
-                      className="h-[104px] w-20 shrink-0 rounded-lg bg-muted object-cover"
+                      height={108}
+                      className="rounded-lg shadow-sm ring-1 ring-border"
                     />
                     <div className="min-w-0 flex-1 space-y-2">
-                      <h2 className="line-clamp-2 font-serif text-lg font-bold leading-snug">
+                      <Link
+                        href={`/books/${item.bookId}`}
+                        className="line-clamp-2 font-serif text-lg font-bold leading-snug transition-colors hover:text-orange-500"
+                      >
                         {item.bookTitle}
-                      </h2>
+                      </Link>
+                      <StatusBadge value={item.returnDate} />
                       <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CalendarDays className="size-4 text-orange-500" />
-                        Borrowed: {formatDate(item.borrowDate)}
+                        <CalendarDays className="size-4 shrink-0 text-orange-500" />
+                        Borrowed: {formatDate(getBorrowDate(item))}
                       </p>
                       <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CalendarCheck className="size-4 text-orange-500" />
+                        <CalendarCheck className="size-4 shrink-0 text-orange-500" />
                         Return by:{" "}
-                        <span className="font-medium text-foreground">
+                        <span
+                          className={`font-medium ${
+                            isOverdue(item.returnDate) ? "text-red-600" : "text-foreground"
+                          }`}
+                        >
                           {formatDate(item.returnDate)}
                         </span>
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => handleReturn(item._id)}
-                    disabled={returningId === item._id}
-                    className={`mt-4 w-full ${returnBtn}`}
-                  >
-                    <RotateCcw className="size-4" />
-                    {returningId === item._id ? "Returning..." : "Return Book"}
-                  </Button>
+                  <ReturnButton
+                    id={item._id}
+                    returningId={returningId}
+                    onReturn={handleReturn}
+                    className="mt-4 w-full"
+                    iconClass="size-4"
+                  />
                 </div>
               ))}
             </div>
