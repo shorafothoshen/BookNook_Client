@@ -42,7 +42,7 @@ export default function PromoSection() {
               </div>
 
               <Image
-                src="/promo/promo-stack.png"
+                src="/part-1.png"
                 alt="A stack of four books"
                 width={600}
                 height={480}
@@ -70,7 +70,7 @@ export default function PromoSection() {
                 </Button>
               </div>
               <Image
-                src="/promo/promo-books-1.png"
+                src="/part-2.png"
                 alt="A stack of three books"
                 width={600}
                 height={480}
@@ -98,7 +98,7 @@ export default function PromoSection() {
                 </Button>
               </div>
               <Image
-                src="/promo/promo-books-2.png"
+                src="/part-3.png"
                 alt="A stack of two books"
                 width={600}
                 height={480}

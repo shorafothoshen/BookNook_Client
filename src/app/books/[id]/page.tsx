@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { BookDetails } from "@/lib/types";
 import BorrowDialog from "@/components/BorrowDialog";
 
-export const metadata: Metadata = { title: "BookNook | Book Details" };
+export const metadata: Metadata = { title: "Book Details" };
 
 export default async function BookDetailsPage({
   params,

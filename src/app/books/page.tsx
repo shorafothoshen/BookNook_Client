@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
-export const metadata: Metadata = { title: "BookNook | All Books" };
+export const metadata: Metadata = { title: "All Books" };
 
 export default async function AllBooksPage() {
   let books: BookType[] = [];
