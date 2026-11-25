@@ -15,7 +15,7 @@ export default async function AllBooksPage() {
   let errorMessage = "";
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/books`);
+    const res = await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/books`);
       const result = await res.json().catch(() => null);
 
       if (!res.ok) {

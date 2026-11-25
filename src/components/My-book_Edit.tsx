@@ -44,7 +44,7 @@ async function uploadImage(file: File): Promise<string> {
   body.append("image", file);
 
   const res = await fetch(
-    `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+    `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_KEY_SECRECT_KEY}`,
     { method: "POST", body },
   );
   const result = await res.json().catch(() => null);
@@ -98,7 +98,7 @@ export default function EditDialog({
       // upload only if a new image was chosen, otherwise the old image stays
       if (newImage) changes.image = await uploadImage(newImage);
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/update-book/${book._id}`, {
+      await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/update-book/${book._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

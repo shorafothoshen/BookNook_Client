@@ -32,7 +32,7 @@ export default function MyBooksPage() {
 
     const loadBooks = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/my-books`, {
+        const res = await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/my-books`, {
           cache: "no-store", // always ask the server, never show an old list
           headers: { authorization: `Bearer ${await getToken()}` },
         });

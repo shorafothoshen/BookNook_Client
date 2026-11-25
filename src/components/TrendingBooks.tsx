@@ -44,7 +44,7 @@ export default function TrendingBooks() {
     const load = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/trending-books`
+          `${process.env.BACK_END_SERVER_API_URL}/api/trending-books`
         );
         if (!res.ok) throw new Error("Failed to load books");
         setData(await res.json());

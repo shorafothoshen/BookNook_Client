@@ -43,7 +43,7 @@ async function uploadImage(file: File): Promise<string> {
   body.append("image", file);
 
   const res = await fetch(
-    `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+    `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_KEY_SECRECT_KEY}`,
     { method: "POST", body },
   );
   const result = await res.json().catch(() => null);
