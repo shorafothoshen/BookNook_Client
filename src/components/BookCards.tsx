@@ -17,7 +17,7 @@ interface Book {
 const getBooks = async (): Promise<Book[]> => {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/limit-books`, {
-      cache: "no-store",
+      cache: "force-cache",
     });
     if (!res.ok) throw new Error("Failed to load books");
     const data = await res.json();
