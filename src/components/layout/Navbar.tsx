@@ -103,7 +103,11 @@ export default function Navbar() {
       <Collapsible open={menuOpen} onOpenChange={setMenuOpen}>
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           {/* ---------- Logo ---------- */}
-          <Link href="/" onClick={closeMenu} className="flex min-w-0 items-center gap-2.5">
+          <Link
+            href="/"
+            onClick={closeMenu}
+            className="flex min-w-0 items-center gap-2.5"
+          >
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-orange-500 text-white">
               <BookIcon />
             </span>
@@ -138,12 +142,11 @@ export default function Navbar() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {isPending ? (
               <span
-                className="size-9 animate-pulse rounded-full bg-white/10 sm:size-10"
+                className="hidden size-10 animate-pulse rounded-full bg-white/10 lg:block"
                 aria-hidden="true"
               />
             ) : user ? (
               <>
-                {/* tablet / mobile: small avatar that opens the profile page */}
                 <Link
                   href="/profile"
                   aria-label="My profile"
@@ -151,13 +154,16 @@ export default function Navbar() {
                   className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:hidden"
                 >
                   <Avatar className="size-9 ring-2 ring-orange-500">
-                    <AvatarImage src={user.image ?? undefined} alt={user.name} />
+                    <AvatarImage
+                      src={user.image ?? undefined}
+                      alt={user.name}
+                    />
                     <AvatarFallback className="bg-orange-500 font-semibold text-white">
                       {user.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                </Link>
-
+                </Link>{" "}
+                ← line 159 (delete shesh)
                 {/* desktop: avatar + dropdown */}
                 <div className="hidden lg:block">
                   <DropdownMenu>
@@ -166,7 +172,10 @@ export default function Navbar() {
                       className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                     >
                       <Avatar className="h-10 w-10 ring-2 ring-orange-500">
-                        <AvatarImage src={user.image ?? undefined} alt={user.name} />
+                        <AvatarImage
+                          src={user.image ?? undefined}
+                          alt={user.name}
+                        />
                         <AvatarFallback className="bg-orange-500 font-semibold text-white">
                           {user.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -239,7 +248,11 @@ export default function Navbar() {
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               className="grid size-10 cursor-pointer place-items-center rounded-lg text-white transition hover:bg-white/10 lg:hidden"
             >
-              {menuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+              {menuOpen ? (
+                <X className="size-6" />
+              ) : (
+                <Menu className="size-6" />
+              )}
             </CollapsibleTrigger>
           </div>
         </nav>
@@ -273,7 +286,9 @@ export default function Navbar() {
                   <p className="truncate text-sm font-semibold text-white">
                     {user.name}
                   </p>
-                  <p className="truncate text-xs text-slate-400">{user.email}</p>
+                  <p className="truncate text-xs text-slate-400">
+                    {user.email}
+                  </p>
                   <p className="mt-0.5 text-xs font-medium text-orange-400">
                     View profile
                   </p>
