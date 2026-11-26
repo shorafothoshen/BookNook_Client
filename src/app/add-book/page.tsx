@@ -280,7 +280,7 @@ export default function AddBookPage() {
             <Button
               type="submit"
               disabled={loading || isPending}
-              className="w-full bg-orange-500 text-white hover:bg-orange-600"
+              className="cursor-pointer w-full bg-orange-500 text-white hover:bg-orange-600"
             >
               {loading ? "Adding Book..." : "Add Book"}
             </Button>

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Copy } from "lucide-react";
 import { Bounce, toast } from "react-toastify";
 
@@ -18,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getToken } from "@/lib/token";
+import { authClient } from "@/lib/auth-client";
 import { type borrowedBook } from "@/lib/types";
 
 const toastOptions = {
@@ -67,6 +69,8 @@ export default function BorrowDialog({
   userName,
   userEmail,
 }: borrowedBook) {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [availableCopies, setAvailableCopies] = useState(initialAvailable);
@@ -75,6 +79,12 @@ export default function BorrowDialog({
 
   async function handleBorrow() {
     setLoading(true);
+
+    if (!session?.user) {
+      setLoading(false);
+      router.push("/login");
+      return;
+    }
 
     const returnDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const result = await borrowBook(bookId, returnDate);
@@ -164,7 +174,7 @@ export default function BorrowDialog({
 
               <DialogFooter className="gap-2 sm:gap-2">
                 <DialogClose
-                  render={<Button type="button" variant="outline" disabled={loading} />}
+                  render={<Button type="button" variant="outline" disabled={loading} className="cursor-pointer" />}
                 >
                   Cancel
                 </DialogClose>

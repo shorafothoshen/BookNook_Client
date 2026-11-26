@@ -210,7 +210,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-orange-500 text-white hover:bg-orange-600"
+              className="cursor-pointer w-full bg-orange-500 text-white hover:bg-orange-600"
             >
               {loading ? "Registering..." : "Register"}
             </Button>

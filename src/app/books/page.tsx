@@ -129,7 +129,7 @@ export default async function AllBooksPage() {
                   <Button
                     nativeButton={false}
                     render={<Link href={`/books/${book._id}`} />}
-                    className="group/btn h-auto w-full rounded-xl border-transparent bg-orange-500 py-3 text-sm font-semibold text-white shadow-md shadow-orange-500/25 hover:bg-orange-600"
+                    className="cursor-pointer group/btn h-auto w-full rounded-xl border-transparent bg-orange-500 py-3 text-sm font-semibold text-white shadow-md shadow-orange-500/25 hover:bg-orange-600"
                   >
                     View Details
                     <ArrowRight className="ml-2 size-4 transition-transform group-hover/btn:translate-x-1" />

@@ -25,7 +25,7 @@ export default function HeroBanner() {
   const [autoplay] = useState(() =>
     Autoplay({ delay: 4500, stopOnInteraction: false, stopOnMouseEnter: true })
   );
-  const [api, setApi] = useState<CarouselApi>();
+const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [failed, setFailed] = useState<string[]>([]);
 

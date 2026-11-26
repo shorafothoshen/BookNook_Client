@@ -86,7 +86,7 @@ export default function MyBooksPage() {
           <Button
             nativeButton={false}
             render={<Link href="/add-book" />}
-            className="w-full gap-2 bg-orange-500 text-white hover:bg-orange-600 sm:w-auto"
+            className="cursor-pointer w-full gap-2 bg-orange-500 text-white hover:bg-orange-600 sm:w-auto"
           >
             <Plus className="size-4" />
             Add Book

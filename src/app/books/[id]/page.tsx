@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { auth } from "@/lib/auth";
@@ -38,6 +38,10 @@ export default async function BookDetailsPage({
       headers: { authorization: `Bearer ${jwt.token}` },
     });
     const result = await res.json().catch(() => null);
+
+    if (!session || !session.user) {
+      redirect("/login");
+    }
 
     if (res.status === 404 || res.status === 400) {
       bookMissing = true; // no book with this id

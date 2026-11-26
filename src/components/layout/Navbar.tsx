@@ -220,14 +220,14 @@ export default function Navbar() {
                   variant="outline"
                   nativeButton={false}
                   render={<Link href="/login" />}
-                  className={loginBtn}
+                  className={`cursor-pointer ${loginBtn}`}
                 >
                   Login
                 </Button>
                 <Button
                   nativeButton={false}
                   render={<Link href="/sign-up" />}
-                  className={registerBtn}
+                  className={`cursor-pointer ${registerBtn}`}
                 >
                   Register
                 </Button>
@@ -309,14 +309,14 @@ export default function Navbar() {
                   variant="outline"
                   nativeButton={false}
                   render={<Link href="/login" onClick={closeMenu} />}
-                  className="h-11 rounded-lg border-white/20 bg-transparent px-4 text-sm font-medium text-white shadow-none hover:bg-white/5 hover:text-white"
+                  className="cursor-pointer h-11 rounded-lg border-white/20 bg-transparent px-4 text-sm font-medium text-white shadow-none hover:bg-white/5 hover:text-white"
                 >
                   Login
                 </Button>
                 <Button
                   nativeButton={false}
                   render={<Link href="/sign-up" onClick={closeMenu} />}
-                  className="h-11 rounded-lg border-transparent bg-orange-500 px-4 text-sm font-semibold text-white shadow-none hover:bg-orange-600"
+                  className="cursor-pointer h-11 rounded-lg border-transparent bg-orange-500 px-4 text-sm font-semibold text-white shadow-none hover:bg-orange-600"
                 >
                   Register
                 </Button>

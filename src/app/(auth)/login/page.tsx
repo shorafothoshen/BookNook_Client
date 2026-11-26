@@ -115,12 +115,21 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 required
               />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="#"
+                  className="text-sm text-orange-500 hover:underline"
+                >
+                  Forget Password?
+                </Link>
+              </div>
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-orange-500 text-white hover:bg-orange-600"
+              className="cursor-pointer w-full bg-orange-500 text-white hover:bg-orange-600"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>

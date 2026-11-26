@@ -251,7 +251,7 @@ export default function MyBorrows() {
             <Button
               nativeButton={false}
               render={<Link href="/books" />}
-              className="mt-5 cursor-pointer bg-orange-500 text-white hover:bg-orange-600"
+              className="cursor-pointer mt-5 bg-orange-500 text-white hover:bg-orange-600"
             >
               Browse Books
             </Button>
