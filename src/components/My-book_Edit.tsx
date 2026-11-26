@@ -98,7 +98,7 @@ export default function EditDialog({
       // upload only if a new image was chosen, otherwise the old image stays
       if (newImage) changes.image = await uploadImage(newImage);
 
-      await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/update-book/${book._id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/update-book/${book._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

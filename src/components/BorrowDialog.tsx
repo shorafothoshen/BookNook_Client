@@ -35,7 +35,7 @@ async function borrowBook(bookId: string, returnDate: string) {
   try {
     const token = await getToken();
 
-    const res = await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/borrow/${bookId}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/borrow/${bookId}`, {
       method: "POST",
       cache: "no-store",
       headers: {

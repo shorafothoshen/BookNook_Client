@@ -43,7 +43,7 @@ export default function DeleteDialog({
     setDeleting(true);
     try {
       const token = await getToken();
-      await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/delete-book/${book._id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/delete-book/${book._id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

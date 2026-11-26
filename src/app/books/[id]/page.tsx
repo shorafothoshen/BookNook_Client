@@ -29,7 +29,6 @@ export default async function BookDetailsPage({
   try {
     const headerList = await headers();
 
-    // login check proxy.ts e hocche, ekhane shudhu JWT ar user newa hocche
     const jwt = await auth.api.getToken({ headers: headerList });
     const session = await auth.api.getSession({ headers: headerList });
     user = { name: session?.user.name ?? "", email: session?.user.email ?? "" };
@@ -45,7 +44,6 @@ export default async function BookDetailsPage({
     } else if (!res.ok) {
       throw new Error(result?.message || "Could not load the book.");
     } else {
-      // the backend may send the book itself, or { book: {...} }
       book = result?.book ?? result;
     }
   } catch (error) {

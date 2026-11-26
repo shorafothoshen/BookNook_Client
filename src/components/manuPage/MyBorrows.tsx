@@ -151,7 +151,7 @@ export default function MyBorrows() {
           throw new Error("Please log in again.");
         }
 
-        const res = await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/my-borrows`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/my-borrows`, {
           cache: "no-store",
           headers: { authorization: `Bearer ${data.token}` },
         });
@@ -186,7 +186,7 @@ export default function MyBorrows() {
         return;
       }
 
-      const res = await fetch(`${process.env.BACK_END_SERVER_API_URL}/api/return/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/return/${id}`, {
         method: "PATCH",
         headers: { authorization: `Bearer ${data.token}` },
       });
