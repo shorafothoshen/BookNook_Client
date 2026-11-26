@@ -86,6 +86,7 @@ export default async function BookDetailsPage({
 
   return (
     <main className="bg-muted/30 py-10 sm:py-14">
+      <title>{book.title}</title>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Link
           href="/books"

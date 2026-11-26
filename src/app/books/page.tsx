@@ -29,6 +29,7 @@ export default async function AllBooksPage() {
 
   return (
     <main className="bg-muted/30 py-12 sm:py-16">
+      <title>All Books</title>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* ---------- Heading ---------- */}
         <div className="mx-auto max-w-2xl text-center">
